@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const axios = require('axios');
+const Ain = require('@ainblockchain/ain-js').default;
 
 /*
 Load ENV
@@ -8,6 +9,12 @@ Load ENV
 const dataFilePath = process.env.DATA_FILE_PATH || 'data.txt';
 const endpoint = process.env.ENDPOINT || 'https://eleuther-ai-gpt-j-6b-float16-text-generation-api-ainize-team.endpoint.ainize.ai/predictions/text-generation';
 const port = process.env.PORT || 3000;
+const providerURL = process.env.PROVIDER_URL || 'https://testnet-api.ainetwork.ai';
+const appName = process.env.APP_NAME;
+
+
+const ain = new Ain(providerURL);
+
 
 /*
 Load Data for AINFT ChatBot
@@ -46,9 +53,8 @@ const processingResponse = (responseText) => {
     return retText.trim();
 }
 
-app.post('/chat', async (req, res) => {
-    const {text_inputs} = req.body;
-    const prompt = `${data}\nHuman: ${text_inputs}\nAI:`
+const chat = async (textInputs) => {
+    const prompt = `${data}\nHuman: ${textInputs}\nAI:`
     const responseData = await axios.post(endpoint, {
         text_inputs: prompt,
         temperature: 0.9,
@@ -59,9 +65,49 @@ app.post('/chat', async (req, res) => {
         length: 50
     });
     const responseText = responseData.data[0].substr(prompt.length);
-    res.send({text: processingResponse(responseText)});
+    return processingResponse(responseText);
+}
+
+const sendResponse = async (ref, message) => {
+    return ain.db.ref(ref).setValue({
+        value: message,
+        nonce: -1,
+    })
+}
+
+app.post('/chat', async (req, res) => {
+    const {text_inputs} = req.body;
+    const botResponse = await chat(text_inputs);
+    res.json({text: botResponse});
+});
+
+// Ainize Trigger
+app.post('/trigger', async (req, res) => {
+    console.log(req.body);
+    if(!('transaction' in req.body) ||
+        !('tx_body' in req.body.transaction) ||
+        !('operation' in req.body.transaction.tx_body)
+    ){
+        res.status(400).json(`Invalid transaction : ${JSON.stringify(req.body)}`)
+        return;
+    }
+    const transaction = req.body.transaction.tx_body.operation;
+    const {type: tx_type} = transaction;
+    if (tx_type !== 'SET_VALUE') {
+        res.status(400).json(`Not supported transaction type : ${tx_type}`);
+        return;
+    }
+    try {
+        const {value, ref} = transaction;
+        const botResponse = await chat(value);
+        const responseRef = ref.split('/').slice(0, -1).concat('result').join('/');
+        const retValue = await sendResponse(responseRef, botResponse);
+        res.json(retValue);
+    } catch (error) {
+        res.status(500).json(`Failed : ${error}`)
+    }
 });
 
 app.listen(port, () => {
-    console.log(`app listening on port ${app.get('port')}`);
+    console.log(`app listening on port ${port}`);
 });
