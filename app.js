@@ -84,10 +84,13 @@ const chat = async (textInputs) => {
 }
 
 const sendResponse = async (ref, message) => {
-    return ain.db.ref(ref).setValue({
+    console.log('send', ref, message);
+    const res = await ain.db.ref(ref).setValue({
         value: message,
         nonce: -1,
     })
+    console.log(res);
+    return res;
 }
 
 app.post('/chat', async (req, res) => {
