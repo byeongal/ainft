@@ -9,7 +9,7 @@ Load ENV
 const dataFilePath = process.env.DATA_FILE_PATH || 'data.txt';
 const endpoint = process.env.ENDPOINT || 'https://eleuther-ai-gpt-j-6b-float16-text-generation-api-ainize-team.endpoint.ainize.ai';
 const port = process.env.PORT || 3000;
-const providerURL = process.env.TESTNET_URL || 'https://testnet-api.ainetwork.ai';
+const providerURL = 'https://testnet-api.ainetwork.ai';
 
 const ainizeinternalprivatekey = process.env.PRIVATE_KEY;
 
