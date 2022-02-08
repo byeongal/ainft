@@ -103,12 +103,14 @@ app.post('/trigger', async (req, res) => {
         !('tx_body' in req.body.transaction) ||
         !('operation' in req.body.transaction.tx_body)
     ){
+        console.error(`Invalid transaction : ${JSON.stringify(req.body)}`);
         res.status(400).json(`Invalid transaction : ${JSON.stringify(req.body)}`)
         return;
     }
     const transaction = req.body.transaction.tx_body.operation;
     const {type: tx_type} = transaction;
     if (tx_type !== 'SET_VALUE') {
+        console.error(`Not supported transaction type : ${tx_type}`);
         res.status(400).json(`Not supported transaction type : ${tx_type}`);
         return;
     }
@@ -119,7 +121,8 @@ app.post('/trigger', async (req, res) => {
         const retValue = await sendResponse(responseRef, botResponse);
         res.json(retValue);
     } catch (error) {
-        res.status(500).json(`Failed : ${error}`)
+        console.error(`Failed : ${error}`);
+        res.status(500).json(`Failed : ${error}`);
     }
 });
 
