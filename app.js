@@ -7,13 +7,19 @@ const Ain = require('@ainblockchain/ain-js').default;
 Load ENV
  */
 const dataFilePath = process.env.DATA_FILE_PATH || 'data.txt';
-const endpoint = process.env.ENDPOINT || 'https://eleuther-ai-gpt-j-6b-float16-text-generation-api-ainize-team.endpoint.ainize.ai/predictions/text-generation';
+const endpoint = process.env.ENDPOINT || 'https://eleuther-ai-gpt-j-6b-float16-text-generation-api-ainize-team.endpoint.ainize.ai';
 const port = process.env.PORT || 3000;
 const providerURL = process.env.PROVIDER_URL || 'https://testnet-api.ainetwork.ai';
-const appName = process.env.APP_NAME;
 
+const ainizeinternalprivatekey = process.env.AINIZE_INTERNAL_PRIVATE_KEY || '123';
 
-const ain = new Ain(providerURL);
+const chainId = endpoint.includes('mainnet') ? 1 : 0
+const generationEndPoint = `${endpoint}/predictions/text-generation`;
+const healthCheckEndPoint = `${endpoint}/ping`;
+
+const ain = new Ain(providerURL, chainId);
+const ainAddress = Ain.utils.toChecksumAddress(ain.wallet.add(ainizeinternalprivatekey));
+ain.wallet.setDefaultAccount(ainAddress);
 
 
 /*
@@ -40,6 +46,15 @@ app.get('/', (req, res) => {
     })
 })
 
+app.get('/ping', async (req, res) => {
+    const responseData = await axios.post(healthCheckEndPoint);
+    if(responseData.status === 200) {
+        res.json(responseData.data);
+    }else{
+        res.json({status: "Unhealthy"})
+    }
+});
+
 /*
 Postprocessing for ChatBot
  */
@@ -55,7 +70,7 @@ const processingResponse = (responseText) => {
 
 const chat = async (textInputs) => {
     const prompt = `${data}\nHuman: ${textInputs}\nAI:`
-    const responseData = await axios.post(endpoint, {
+    const responseData = await axios.post(generationEndPoint, {
         text_inputs: prompt,
         temperature: 0.9,
         top_p: 0.95,
@@ -100,7 +115,7 @@ app.post('/trigger', async (req, res) => {
     try {
         const {value, ref} = transaction;
         const botResponse = await chat(value);
-        const responseRef = ref.split('/').slice(0, -1).concat('result').join('/');
+        const responseRef = ref.split('/').slice(0, -1).concat('response').join('/');
         const retValue = await sendResponse(responseRef, botResponse);
         res.json(retValue);
     } catch (error) {
