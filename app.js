@@ -11,7 +11,7 @@ const endpoint = process.env.ENDPOINT || 'https://eleuther-ai-gpt-j-6b-float16-t
 const port = process.env.PORT || 3000;
 const providerURL = process.env.PROVIDER_URL || 'https://testnet-api.ainetwork.ai';
 
-const ainizeinternalprivatekey = process.env.AINIZE_INTERNAL_PRIVATE_KEY;
+const ainizeinternalprivatekey = process.env.PRIVATE_KEY;
 
 const generationEndPoint = `${endpoint}/predictions/text-generation`;
 const healthCheckEndPoint = `${endpoint}/ping`;
@@ -19,6 +19,7 @@ const healthCheckEndPoint = `${endpoint}/ping`;
 const chainId = providerURL.includes('mainnet') ? 1 : 0
 const ain = new Ain(providerURL, chainId);
 const ainAddress = Ain.utils.toChecksumAddress(ain.wallet.add(ainizeinternalprivatekey));
+console.log(ainAddress)
 ain.wallet.setDefaultAccount(ainAddress);
 
 
