@@ -11,12 +11,12 @@ const endpoint = process.env.ENDPOINT || 'https://eleuther-ai-gpt-j-6b-float16-t
 const port = process.env.PORT || 3000;
 const providerURL = process.env.PROVIDER_URL || 'https://testnet-api.ainetwork.ai';
 
-const ainizeinternalprivatekey = process.env.AINIZE_INTERNAL_PRIVATE_KEY || '123';
+const ainizeinternalprivatekey = process.env.AINIZE_INTERNAL_PRIVATE_KEY;
 
-const chainId = endpoint.includes('mainnet') ? 1 : 0
 const generationEndPoint = `${endpoint}/predictions/text-generation`;
 const healthCheckEndPoint = `${endpoint}/ping`;
 
+const chainId = providerURL.includes('mainnet') ? 1 : 0
 const ain = new Ain(providerURL, chainId);
 const ainAddress = Ain.utils.toChecksumAddress(ain.wallet.add(ainizeinternalprivatekey));
 ain.wallet.setDefaultAccount(ainAddress);
